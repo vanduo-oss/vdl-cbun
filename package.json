@@ -1,0 +1,116 @@
+{
+  "name": "@vanduo-oss/vdl-cbun",
+  "version": "1.0.0",
+  "description": "Vanduo Labs miscellaneous Vue 3 component bundle — code-editor, draw, hex-grid, music-player",
+  "type": "module",
+  "license": "MIT",
+  "author": "vanduo-oss",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/vanduo-oss/vdl-cbun#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vanduo-oss/vdl-cbun.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vanduo-oss/vdl-cbun/issues"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./code-editor": {
+      "types": "./dist/code-editor/index.d.ts",
+      "import": "./dist/code-editor/index.js",
+      "require": "./dist/code-editor/index.cjs"
+    },
+    "./code-editor/highlight": {
+      "types": "./dist/code-editor/highlight.d.ts",
+      "import": "./dist/code-editor/highlight.js",
+      "require": "./dist/code-editor/highlight.cjs"
+    },
+    "./code-editor/css": "./dist/code-editor/vd3-code-editor.css",
+    "./draw": {
+      "types": "./dist/draw/index.d.ts",
+      "import": "./dist/draw/index.js",
+      "require": "./dist/draw/index.cjs"
+    },
+    "./draw/css": "./dist/draw/vd3-draw.css",
+    "./hex-grid": {
+      "types": "./dist/hex-grid/index.d.ts",
+      "import": "./dist/hex-grid/index.js",
+      "require": "./dist/hex-grid/index.cjs"
+    },
+    "./hex-grid/hex-math": {
+      "types": "./dist/hex-grid/hex-math.d.ts",
+      "import": "./dist/hex-grid/hex-math.js",
+      "require": "./dist/hex-grid/hex-math.cjs"
+    },
+    "./music-player": {
+      "types": "./dist/music-player/index.d.ts",
+      "import": "./dist/music-player/index.js",
+      "require": "./dist/music-player/index.cjs"
+    },
+    "./music-player/css": "./dist/music-player/vd3-music-player.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "SKILL.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "vanduo",
+    "labs",
+    "vue",
+    "components",
+    "code-editor",
+    "draw",
+    "hex-grid",
+    "music-player"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "clean": "rm -rf dist",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{js,ts}\" \"scripts/**/*.js\" \"tests/**/*.{js,ts}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts}\" \"scripts/**/*.js\" \"tests/**/*.{js,ts}\"",
+    "stylelint": "stylelint \"src/**/*.css\"",
+    "test": "vitest run",
+    "test:types": "tsc --noEmit -p tests/types/tsconfig.json",
+    "test:e2e": "playwright test",
+    "prepack": "pnpm run build",
+    "release": "pnpm run build && pnpm publish"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@typescript-eslint/parser": "8.69.0",
+    "@vue/test-utils": "2.5.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.10.0",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.6",
+    "stylelint": "17.15.0",
+    "stylelint-config-standard": "40.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vitest": "4.1.11",
+    "vue": "3.5.42"
+  },
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.28.2"
+}

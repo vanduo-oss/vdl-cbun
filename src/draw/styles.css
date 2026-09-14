@@ -1,0 +1,346 @@
+/* Draw tool styles — a local --vd-draw-* token layer over the global --vd-*
+   design tokens. Chrome (surface, grid, toolbar, panel, selection UI) reads
+   only the locals, so dark/light + palette changes flow through the cascade
+   with no JS. Marks carry an explicit, user-picked color and do not re-theme.
+   Override any local (no !important needed) to retheme. */
+:root {
+  --vd-draw-surface: var(--vd-bg-primary, #fcfbf7);
+  --vd-draw-panel: color-mix(in srgb, var(--vd-bg-secondary, #f4efe2) 88%, #ffffff);
+  --vd-draw-border: color-mix(in srgb, var(--vd-border-color, #d5ccba) 80%, #ffffff);
+  --vd-draw-accent: var(--vd-color-primary, #245f52);
+  --vd-draw-text: var(--vd-text-primary, #1f2720);
+  --vd-draw-muted: var(--vd-text-muted, #67746a);
+  --vd-draw-grid: color-mix(in srgb, var(--vd-border-color, #d5ccba) 55%, transparent);
+  /* Default ink for a fresh mark (theme-aware first stroke). */
+  --vd-draw-ink: var(--vd-text-primary, #1f2720);
+  --vd-draw-shape-stroke: var(--vd-color-primary, #245f52);
+  --vd-draw-sticky-fill: color-mix(in srgb, var(--vd-color-primary, #245f52) 12%, #fdf6d8);
+  --vd-draw-selection: var(--vd-color-primary, #245f52);
+  --vd-draw-handle-fill: var(--vd-bg-primary, #ffffff);
+  --vd-draw-guide: color-mix(in srgb, var(--vd-color-primary, #245f52) 60%, #d6336c);
+  /* SVG <text> does not inherit font-family reliably; set it explicitly. */
+  --vd-draw-font: inherit;
+}
+
+.vd-draw-host {
+  height: 560px;
+  font-family: var(--vd-draw-font);
+}
+
+.vd-draw-shell {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 380px;
+  border: 1px solid var(--vd-draw-border);
+  border-radius: 8px;
+  background: var(--vd-draw-surface);
+  color: var(--vd-draw-text);
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────── */
+.vd-draw-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid var(--vd-draw-border);
+  background: var(--vd-draw-panel);
+}
+
+.vd-draw-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.vd-draw-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  color: var(--vd-draw-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.vd-draw-tool:hover {
+  background: color-mix(in srgb, var(--vd-draw-accent) 12%, transparent);
+}
+
+.vd-draw-tool[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--vd-draw-accent) 20%, transparent);
+  border-color: var(--vd-draw-accent);
+  color: var(--vd-draw-accent);
+}
+
+.vd-draw-tool:focus-visible {
+  outline: 2px solid var(--vd-draw-accent);
+  outline-offset: 1px;
+}
+
+/* Inline Phosphor icons — sized + a soft drop-shadow for visibility. */
+.vd-draw-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.32));
+}
+
+/* ── Style panel (brushes, colors, sliders) ──────────────────────────── */
+.vd-draw-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--vd-draw-border);
+  background: color-mix(in srgb, var(--vd-draw-panel) 60%, var(--vd-draw-surface));
+}
+
+.vd-draw-panel-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  padding-right: 0.6rem;
+  border-right: 1px solid color-mix(in srgb, var(--vd-draw-border) 60%, transparent);
+}
+
+.vd-draw-panel-group:last-child {
+  border-right: none;
+}
+
+.vd-draw-panel-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vd-draw-muted);
+  margin-right: 0.1rem;
+}
+
+.vd-draw-value {
+  min-width: 2.6em;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--vd-draw-text);
+}
+
+.vd-draw-panel input[type='range'] {
+  width: 90px;
+  accent-color: var(--vd-draw-accent);
+  cursor: pointer;
+}
+
+.vd-draw-brush {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--vd-draw-muted);
+  background: transparent;
+  border: 1px solid var(--vd-draw-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.vd-draw-brush:hover {
+  color: var(--vd-draw-text);
+}
+
+.vd-draw-brush[aria-pressed='true'] {
+  color: var(--vd-draw-accent);
+  border-color: var(--vd-draw-accent);
+  background: color-mix(in srgb, var(--vd-draw-accent) 12%, transparent);
+}
+
+.vd-draw-swatch {
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  background: var(--sw, #000);
+  border: 1px solid color-mix(in srgb, var(--vd-draw-text) 22%, transparent);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.2);
+  transition: transform 0.12s ease;
+}
+
+.vd-draw-swatch:hover {
+  transform: scale(1.15);
+}
+
+.vd-draw-swatch[aria-pressed='true'] {
+  outline: 2px solid var(--vd-draw-accent);
+  outline-offset: 1px;
+}
+
+.vd-draw-color-input {
+  width: 1.6rem;
+  height: 1.4rem;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--vd-draw-border);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.vd-draw-recent {
+  display: inline-flex;
+  gap: 0.2rem;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────── */
+.vd-draw-canvas {
+  position: relative;
+  overflow: hidden;
+  background: var(--vd-draw-surface);
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.vd-draw-canvas[data-tool="select"] {
+  cursor: default;
+}
+
+.vd-draw-canvas[data-tool="select"] .vd-draw-shapes > * {
+  cursor: move;
+}
+
+.vd-draw-canvas[data-tool="hand"] {
+  cursor: grab;
+}
+
+.vd-draw-canvas[data-tool="hand"].vd-draw-panning,
+.vd-draw-canvas.vd-draw-panning {
+  cursor: grabbing;
+}
+
+.vd-draw-canvas[data-tool="text"] {
+  cursor: text;
+}
+
+.vd-draw-canvas[data-tool="eraser"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='rgba(230,74,25,0.08)' stroke='%23e64a19' stroke-width='1.5' stroke-dasharray='2 2'/%3E%3Ccircle cx='12' cy='12' r='1' fill='%23e64a19'/%3E%3C/svg%3E") 12 12, crosshair;
+}
+
+.vd-draw-canvas:focus {
+  outline: none;
+}
+
+.vd-draw-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vd-draw-grid-rect {
+  pointer-events: none;
+}
+
+/* Diagram shapes — outline in the current/themed stroke color. */
+.vd-draw-shape {
+  stroke: var(--vd-draw-shape-stroke);
+  fill: none;
+}
+
+/* Freehand brush strokes — filled outline in the mark's color (or themed ink). */
+.vd-draw-ink {
+  fill: var(--vd-draw-ink);
+  stroke: none;
+}
+
+.vd-draw-sticky {
+  fill: var(--vd-draw-sticky-fill);
+  stroke: color-mix(in srgb, var(--vd-draw-accent) 30%, var(--vd-draw-border));
+  stroke-width: 1;
+}
+
+.vd-draw-text {
+  fill: var(--vd-draw-text);
+  font-family: var(--vd-draw-font);
+  font-size: 16px;
+  dominant-baseline: hanging;
+}
+
+.vd-draw-selection-box {
+  stroke: var(--vd-draw-selection);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.vd-draw-handle {
+  fill: var(--vd-draw-handle-fill);
+  stroke: var(--vd-draw-selection);
+  stroke-width: 1.5;
+  cursor: nwse-resize;
+}
+
+.vd-draw-handle[data-handle="n"],
+.vd-draw-handle[data-handle="s"] {
+  cursor: ns-resize;
+}
+
+.vd-draw-handle[data-handle="e"],
+.vd-draw-handle[data-handle="w"] {
+  cursor: ew-resize;
+}
+
+.vd-draw-handle[data-handle="nw"],
+.vd-draw-handle[data-handle="se"] {
+  cursor: nwse-resize;
+}
+
+.vd-draw-handle[data-handle="ne"],
+.vd-draw-handle[data-handle="sw"] {
+  cursor: nesw-resize;
+}
+
+.vd-draw-marquee-rect {
+  fill: color-mix(in srgb, var(--vd-draw-selection) 12%, transparent);
+  stroke: var(--vd-draw-selection);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  pointer-events: none;
+}
+
+.vd-draw-guide {
+  stroke: var(--vd-draw-guide);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.vd-draw-text-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vd-draw-text-editor {
+  position: absolute;
+  margin: 0;
+  padding: 2px 4px;
+  font-family: var(--vd-draw-font);
+  font-size: 16px;
+  color: var(--vd-draw-text);
+  background: var(--vd-draw-surface);
+  border: 1px solid var(--vd-draw-selection);
+  border-radius: 3px;
+  resize: none;
+  overflow: hidden;
+  pointer-events: auto;
+  box-sizing: border-box;
+}

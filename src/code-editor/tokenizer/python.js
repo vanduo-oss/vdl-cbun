@@ -1,0 +1,112 @@
+// Python tokenizer. Triple-quoted and prefixed (r/b/f/u) strings are matched as
+// whole strings; f-string interpolation is not sub-highlighted in v1.
+
+import { scan, wordRegex } from './scanner.js';
+
+const KEYWORDS = [
+  'def',
+  'class',
+  'return',
+  'if',
+  'elif',
+  'else',
+  'for',
+  'while',
+  'break',
+  'continue',
+  'pass',
+  'import',
+  'from',
+  'as',
+  'with',
+  'try',
+  'except',
+  'finally',
+  'raise',
+  'yield',
+  'lambda',
+  'global',
+  'nonlocal',
+  'del',
+  'assert',
+  'async',
+  'await',
+  'in',
+  'is',
+  'not',
+  'and',
+  'or',
+  'match',
+  'case',
+];
+
+const BUILTINS = [
+  'print',
+  'len',
+  'range',
+  'int',
+  'float',
+  'str',
+  'list',
+  'dict',
+  'set',
+  'tuple',
+  'bool',
+  'bytes',
+  'type',
+  'isinstance',
+  'issubclass',
+  'super',
+  'open',
+  'enumerate',
+  'zip',
+  'map',
+  'filter',
+  'sorted',
+  'reversed',
+  'sum',
+  'min',
+  'max',
+  'abs',
+  'round',
+  'input',
+  'repr',
+  'format',
+  'object',
+  'self',
+  'cls',
+  'Exception',
+  'ValueError',
+  'TypeError',
+  'KeyError',
+  'IndexError',
+  'AttributeError',
+  'RuntimeError',
+];
+
+const RULES = [
+  { type: 'comment', re: /#[^\n]*/y },
+  {
+    type: 'string',
+    re: /[rRbBfFuU]{0,2}(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?)/y,
+  },
+  { type: 'meta', re: /@[A-Za-z_]\w*/y },
+  { type: 'keyword', re: wordRegex(KEYWORDS) },
+  { type: 'boolean', re: /\b(?:True|False)\b/y },
+  { type: 'null', re: /\bNone\b/y },
+  { type: 'builtin', re: wordRegex(BUILTINS) },
+  { type: 'function', re: /[A-Za-z_]\w*(?=\s*\()/y },
+  {
+    type: 'number',
+    re: /\b0[xXoObB][0-9a-fA-F_]+\b|\b\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?[jJ]?\b/y,
+  },
+  { type: 'operator', re: /:=|[+\-*/%=<>!&|^~@]+/y },
+  { type: 'punctuation', re: /[()[\]{}:;,.]/y },
+  // Catch-all: consume an identifier run (or whitespace) in one match so the
+  // greedy function look-ahead rule runs once per run, not once per character.
+  { type: 'plain', re: /\w+|\s+/y },
+];
+
+export function tokenizePython(source) {
+  return scan(source, RULES);
+}

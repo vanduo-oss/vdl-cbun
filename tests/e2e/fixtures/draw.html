@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vdl-cbun draw smoke</title>
+    <!-- Empty data-URI favicon: suppress Chromium's /favicon.ico 404 (would fail
+         the zero-console-errors gate). -->
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/dist/draw/vd3-draw.css" />
+    <style>
+      :root {
+        --vd-bg-primary: #ffffff;
+        --vd-bg-secondary: #f8f9fa;
+        --vd-border-color: #dee2e6;
+        --vd-text-primary: #1a1d20;
+        --vd-text-muted: #868e96;
+        --vd-color-primary: #245f52;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: system-ui, sans-serif;
+        background: #ffffff;
+      }
+      #draw {
+        width: 720px;
+        height: 480px;
+      }
+    </style>
+    <!-- `vue` is a bare external specifier in the built entry (the wrapper module
+         imports it); the import map resolves it to the local browser build. We
+         drive the framework-agnostic core directly — no Vue app is mounted. -->
+    <script type="importmap">
+      { "imports": { "vue": "/node_modules/vue/dist/vue.esm-browser.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="draw"></div>
+
+    <script type="module">
+      import { VdDrawCore, VD_DRAW_VERSION } from '/dist/draw/index.js';
+
+      window.drawVersion = VD_DRAW_VERSION;
+
+      const seed = {
+        version: '1.1.0',
+        viewport: { x: 0, y: 0, scale: 1 },
+        shapes: [
+          {
+            id: 'seed-rect',
+            type: 'rectangle',
+            x: 40,
+            y: 40,
+            w: 120,
+            h: 80,
+            color: '#245f52',
+            strokeWidth: 2,
+          },
+          {
+            id: 'seed-ink',
+            type: 'freehand',
+            brush: 'pen',
+            color: '#1a1d20',
+            size: 8,
+            opacity: 1,
+            points: [
+              [200, 60],
+              [240, 100],
+              [280, 70],
+              [320, 110],
+            ],
+          },
+        ],
+      };
+
+      const draw = new VdDrawCore({
+        element: '#draw',
+        data: seed,
+        tool: 'draw',
+        autoFit: false,
+      });
+
+      window.draw = draw;
+      window.getShapes = () => draw.getShapes();
+      window.getTool = () => draw.tool;
+      window.setTool = (tool) => draw.setTool(tool);
+      window.canUndo = () => draw.canUndo();
+      window.undo = () => draw.undo();
+      window.toSVG = () => draw.toSVG();
+      window.addRect = () =>
+        draw.addShape({ type: 'rectangle', x: 10, y: 10, w: 40, h: 30, color: '#364fc7' });
+
+      // Deterministic freehand stroke via PointerEvents on the canvas (no
+      // multi-touch). Coordinates are canvas-local so the gesture lands in
+      // empty space away from the seeded marks.
+      window.brushStroke = async () => {
+        const before = draw.getShapes().length;
+        draw.setTool('draw');
+        const canvas = document.querySelector('#draw .vd-draw-canvas');
+        if (!canvas) throw new Error('missing draw canvas');
+        const rect = canvas.getBoundingClientRect();
+        const pts = [
+          [rect.left + 420, rect.top + 200],
+          [rect.left + 460, rect.top + 230],
+          [rect.left + 500, rect.top + 210],
+          [rect.left + 540, rect.top + 250],
+        ];
+        const opts = (x, y) => ({
+          pointerId: 1,
+          pointerType: 'mouse',
+          isPrimary: true,
+          buttons: 1,
+          pressure: 0.5,
+          clientX: x,
+          clientY: y,
+          bubbles: true,
+          cancelable: true,
+        });
+        canvas.dispatchEvent(new PointerEvent('pointerdown', opts(pts[0][0], pts[0][1])));
+        for (let i = 1; i < pts.length; i += 1) {
+          canvas.dispatchEvent(new PointerEvent('pointermove', opts(pts[i][0], pts[i][1])));
+        }
+        const last = pts[pts.length - 1];
+        canvas.dispatchEvent(new PointerEvent('pointerup', opts(last[0], last[1])));
+        await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+        const freehands = draw.getShapes().filter((s) => s.type === 'freehand');
+        return {
+          before,
+          after: draw.getShapes().length,
+          freehandCount: freehands.length,
+          lastPoints: freehands.at(-1)?.points?.length ?? 0,
+        };
+      };
+
+      window.__ready = true;
+    </script>
+  </body>
+</html>

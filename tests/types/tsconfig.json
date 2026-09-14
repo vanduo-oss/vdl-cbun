@@ -1,0 +1,26 @@
+{
+  // Type-test harness compiler options — ported from the old-line flowchart
+  // repo's tests/types/tsconfig.json (strict, noEmit, bundler resolution,
+  // types: []). `pnpm test:types` runs `tsc --noEmit -p` against this file so a
+  // wrong hand-written declaration fails the build loudly.
+  //
+  // Module resolution: the *.test-d.ts files import the PUBLISHED subpath type
+  // surfaces by package self-reference (e.g. '@vanduo-oss/vdl-cbun/charts').
+  // TypeScript resolves a self-reference through the enclosing package.json's
+  // "name" + "exports" map, which points each subpath at its built
+  // dist/<name>/*.d.ts — so this harness type-checks the ACTUAL shipped
+  // declarations (requires `pnpm build` first, same as the Playwright smoke).
+  // This resolves cleanly under `moduleResolution: bundler`; no dist/ path
+  // mapping is needed.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "lib": ["es2020", "dom"],
+    "types": []
+  },
+  "include": ["./*.test-d.ts"]
+}

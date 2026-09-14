@@ -1,0 +1,12 @@
+{
+  "version": "0.9.0",
+  "viewport": { "x": 12, "y": -8, "scale": 1.25 },
+  "shapes": [
+    { "id": "rect-1", "type": "rectangle", "x": 40, "y": 40, "w": 120, "h": 80, "stroke": "#245f52", "strokeWidth": 2 },
+    { "id": "ell-1", "type": "ellipse", "x": 220, "y": 60, "w": 100, "h": 100 },
+    { "id": "line-1", "type": "line", "points": [[40, 200], [200, 260]], "arrowEnd": true },
+    { "id": "ink-1", "type": "freehand", "points": [[300, 200], [320, 220], [340, 210], [360, 240]] },
+    { "id": "note-1", "type": "sticky", "x": 420, "y": 60, "w": 160, "h": 120, "text": "Ship it" },
+    { "id": "label-1", "type": "text", "x": 60, "y": 300, "w": 140, "h": 32, "text": "Legacy 0.9 doc" }
+  ]
+}

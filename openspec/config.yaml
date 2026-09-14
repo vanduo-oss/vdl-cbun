@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Package: @vanduo-oss/vdl-cbun (MIT, vanduo-oss org). Vanduo Labs miscellaneous
+  Vue 3 component bundle: code-editor, draw, hex-grid, music-player — one package
+  with tree-shakeable subpath exports (./code-editor, ./code-editor/highlight,
+  ./code-editor/css, ./draw, ./draw/css, ./hex-grid, ./hex-grid/hex-math,
+  ./music-player, ./music-player/css). Root "." exposes only VDL_CBUN_VERSIONS.
+  Charts and flowchart live in @vanduo-oss/vd3-charts / @vanduo-oss/vd3-flowchart.
+  APIs stay Vd* with --vd-* tokens and vd3-*.css filenames from the vd3-cbun extract.
+  Stack: plain JS cores + thin Vue defineComponent wrappers, hand-written .d.ts,
+  esbuild multi-entry (esm+cjs, external vue, no minify). vue >=3.3 required peer.
+  sideEffects: ["**/*.css"]. Per-widget VERSION constants stay load-bearing and sync
+  with component-versions.json. Tests: vitest + jsdom, Playwright Chromium smoke
+  (port 8797), tsc type tests via package self-reference. openspec/ is not published.
+
+rules:
+  proposal:
+    - Call out semver impact for the bundle AND any affected per-component VERSION
+    - State which component(s) a change touches; unrelated components stay untouched
+    - Always include a "Non-goals" section
+  specs:
+    - Use Given/When/Then scenario format under each requirement
+    - Use SHALL/MUST for normative requirements
+  design:
+    - No window.* globals, no auto-init/DOM-scan layers, no IIFE
+    - Cores stay framework-agnostic; Vue layer stays a thin wrapper
+    - No new runtime npm dependencies
+  tasks:
+    - Include pnpm build and pnpm test when code changes
+    - Include esbuild metafile tree-shake verification when exports/build change
+  changelog:
+    - Track @vanduo-oss/vdl-cbun only; never docs-site content

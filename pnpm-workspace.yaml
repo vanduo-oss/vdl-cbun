@@ -1,0 +1,14 @@
+# pnpm settings live here (pnpm 10+ no longer reads the package.json "pnpm" field).
+onlyBuiltDependencies:
+  - esbuild
+  - "@playwright/test"
+
+overrides:
+  # Security: force the transitive brace-expansion (pulled via
+  # @vue/test-utils > js-beautify > editorconfig > minimatch) to a patched
+  # release — GHSA-3jxr-9vmj-r5cp (DoS via exponential brace expansion). This is
+  # a dev-only dependency (never shipped in dist); the override keeps
+  # `pnpm audit --audit-level=moderate` green. Bounded to ^5.0.7 (the version
+  # eslint already resolves, so the tree dedupes to one) rather than an
+  # open-ended `>=` range.
+  "brace-expansion@>=2.0.0 <2.1.2": "^5.0.7"

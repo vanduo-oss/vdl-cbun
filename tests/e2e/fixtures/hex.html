@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vdl-cbun hex-grid smoke</title>
+    <!-- Empty data-URI favicon: suppresses Chromium's auto /favicon.ico request
+         (a 404 would surface as a console error and fail the zero-errors gate). -->
+    <link rel="icon" href="data:," />
+    <style>
+      /* --vd-* theme tokens the hex core reads (bgPrimary → canvas clear,
+         bgSecondary → hex fill, borderColor → hex stroke, colorPrimary →
+         selected hex). Distinctive values so the pixel sample can prove the
+         paint is token-derived. */
+      :root {
+        --vd-bg-primary: #ffffff;
+        --vd-bg-secondary: #22aa55;
+        --vd-border-color: #0b3d91;
+        --vd-color-primary: #d6336c;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      #mount {
+        width: 960px;
+        height: 640px;
+      }
+      canvas {
+        width: 960px;
+        height: 640px;
+        display: block;
+      }
+    </style>
+    <!-- The built dist entry keeps `vue` as an external bare specifier (it
+         re-exports the Vue wrapper); the import map resolves it locally. This
+         fixture only constructs the framework-agnostic canvas core. -->
+    <script type="importmap">
+      { "imports": { "vue": "/node_modules/vue/dist/vue.esm-browser.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="mount">
+      <canvas id="hex-canvas"></canvas>
+    </div>
+
+    <script type="module">
+      import { VdHexGridCore, VD_HEX_VERSION } from '/dist/hex-grid/index.js';
+
+      window.hexVersion = VD_HEX_VERSION;
+      window.lastSelect = null;
+
+      window.createGrid = (options = {}) => {
+        const element = document.getElementById('mount');
+        const canvas = document.getElementById('hex-canvas');
+        const grid = new VdHexGridCore({
+          element,
+          canvas,
+          size: 30,
+          width: 10,
+          height: 10,
+          rotation: 0,
+          ...options,
+        });
+        grid.on('select', (hex) => {
+          window.lastSelect = { q: hex.q, r: hex.r };
+        });
+        window.grid = grid;
+        return grid;
+      };
+
+      // Read the real painted canvas buffer (no external images were drawn, so
+      // getImageData never taints) and summarize it: unique colors prove the
+      // grid drew over the flat background; fillMatches proves the token-derived
+      // hex fill (#22aa55 → rgb(34,170,85)) actually landed on pixels.
+      window.sampleCanvas = () => {
+        const canvas = document.getElementById('hex-canvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        const px = ctx.getImageData(0, 0, w, h).data;
+        const colors = new Set();
+        let opaque = 0;
+        let fillMatches = 0;
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i];
+          const g = px[i + 1];
+          const b = px[i + 2];
+          const a = px[i + 3];
+          colors.add(r + ',' + g + ',' + b + ',' + a);
+          if (a === 255) opaque += 1;
+          if (Math.abs(r - 34) <= 4 && Math.abs(g - 170) <= 4 && Math.abs(b - 85) <= 4) {
+            fillMatches += 1;
+          }
+        }
+        return { uniqueColors: colors.size, opaque, fillMatches, w, h };
+      };
+
+      // Render observability for the culling / DPR assertions.
+      window.getRenderStats = () => window.grid.getRenderStats();
+      window.getVisibleHexes = () => window.grid.getVisibleHexes();
+      window.setView = (t) => {
+        window.grid.transform = { ...window.grid.transform, ...t };
+        window.grid._render();
+      };
+
+      // Drag helper: dispatches a pointer gesture, waits two animation frames so
+      // the rAF-coalesced gesture frame has run, and returns the render stats
+      // observed mid-gesture (before the idle sharp re-render).
+      window.drag = async (dx, dy, steps = 6) => {
+        const canvas = document.getElementById('hex-canvas');
+        const r = canvas.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: cx, clientY: cy, bubbles: true }));
+        for (let i = 1; i <= steps; i++) {
+          canvas.dispatchEvent(
+            new PointerEvent('pointermove', {
+              clientX: cx + (dx * i) / steps,
+              clientY: cy + (dy * i) / steps,
+              bubbles: true,
+            }),
+          );
+        }
+        await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+        const stats = window.grid.getRenderStats();
+        canvas.dispatchEvent(
+          new PointerEvent('pointerup', { clientX: cx + dx, clientY: cy + dy, bubbles: true }),
+        );
+        return stats;
+      };
+
+      window.createGrid();
+      window.__ready = true;
+    </script>
+  </body>
+</html>

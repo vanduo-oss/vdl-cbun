@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vdl-cbun code-editor smoke</title>
+    <!-- Empty data-URI favicon: suppress Chromium's /favicon.ico 404 (would fail
+         the zero-console-errors gate). -->
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/dist/code-editor/vd3-code-editor.css" />
+    <style>
+      :root {
+        --vd-bg-primary: #ffffff;
+        --vd-bg-secondary: #f8f9fa;
+        --vd-border-color: #dee2e6;
+        --vd-text-primary: #1a1d20;
+        --vd-text-muted: #868e96;
+        --vd-color-primary: #364fc7;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: system-ui, sans-serif;
+        background: #ffffff;
+      }
+      #editor {
+        width: 640px;
+        height: 240px;
+      }
+    </style>
+    <!-- `vue` is a bare external specifier in the built entry (the wrapper module
+         imports it); the import map resolves it to the local browser build. We
+         drive the framework-agnostic core directly — no Vue app is mounted. -->
+    <script type="importmap">
+      { "imports": { "vue": "/node_modules/vue/dist/vue.esm-browser.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="editor"></div>
+
+    <script type="module">
+      import { VdCodeEditorCore, VD_CODE_EDITOR_VERSION } from '/dist/code-editor/index.js';
+
+      window.editorVersion = VD_CODE_EDITOR_VERSION;
+      window.changes = [];
+
+      const editor = new VdCodeEditorCore({
+        element: '#editor',
+        value: 'const x = 1;\n',
+        language: 'javascript',
+      });
+      editor.on('change', (e) => window.changes.push(e.value));
+
+      window.editor = editor;
+      window.getValue = () => editor.getValue();
+      window.caretToEnd = () => editor.setSelection(editor.getValue().length);
+      window.__ready = true;
+    </script>
+  </body>
+</html>

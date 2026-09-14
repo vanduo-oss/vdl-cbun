@@ -1,0 +1,321 @@
+/**
+ * Vanduo vd3 — Code Editor
+ * A textarea-overlay code editor: a transparent <textarea> over a <pre>
+ * highlight layer. The two layers MUST share identical typography (font,
+ * size, line-height, tab-size, padding, white-space, direction) or the caret
+ * drifts from the painted glyphs. Themed via --vd-* tokens.
+ */
+
+:root {
+  /* Surface */
+  --vd-code-editor-bg: var(--vd-bg-primary, #ffffff);
+  --vd-code-editor-text: var(--vd-text-primary, #1f2937);
+  --vd-code-editor-border: var(--vd-border-color, #e5e7eb);
+  --vd-code-editor-radius: var(--vd-border-radius, 0.5rem);
+  --vd-code-editor-gutter-bg: var(--vd-bg-secondary, #f9fafb);
+  --vd-code-editor-gutter-text: var(--vd-text-muted, #9ca3af);
+  --vd-code-editor-active-line: var(--vd-color-primary-alpha-10, rgba(59, 130, 246, 0.08));
+  --vd-code-editor-caret: var(--vd-color-primary, #3b82f6);
+  --vd-code-editor-selection: rgba(var(--vd-color-primary-rgb, 59, 130, 246), 0.24);
+  --vd-code-editor-placeholder: var(--vd-text-muted, #9ca3af);
+
+  /* Typography */
+  --vd-code-editor-font: var(
+    --vd-font-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    'Liberation Mono',
+    monospace
+  );
+  --vd-code-editor-font-size: 0.875rem;
+  --vd-code-editor-line-height: 1.5;
+  --vd-code-editor-padding: 0.75rem;
+  --vd-code-editor-gutter-digits: 2;
+  --vd-code-editor-tab-size: 2;
+
+  /* Syntax palette (light) */
+  --vd-code-editor-tk-comment: #6b7280;
+  --vd-code-editor-tk-keyword: #7c3aed;
+  --vd-code-editor-tk-string: #16a34a;
+  --vd-code-editor-tk-number: #c2410c;
+  --vd-code-editor-tk-literal: #c2410c;
+  --vd-code-editor-tk-function: #2563eb;
+  --vd-code-editor-tk-operator: #475569;
+  --vd-code-editor-tk-punctuation: #64748b;
+  --vd-code-editor-tk-property: #2563eb;
+  --vd-code-editor-tk-tag: #dc2626;
+  --vd-code-editor-tk-attribute: #c2410c;
+  --vd-code-editor-tk-builtin: #0891b2;
+  --vd-code-editor-tk-meta: #db2777;
+}
+
+[data-theme='dark'] {
+  --vd-code-editor-gutter-bg: var(--vd-bg-secondary, #161b22);
+  --vd-code-editor-active-line: var(--vd-color-primary-alpha-10, rgba(88, 166, 255, 0.1));
+  --vd-code-editor-selection: rgba(var(--vd-color-primary-rgb, 88, 166, 255), 0.28);
+  --vd-code-editor-tk-comment: #7d8590;
+  --vd-code-editor-tk-keyword: #c792ea;
+  --vd-code-editor-tk-string: #9ece6a;
+  --vd-code-editor-tk-number: #ff9e64;
+  --vd-code-editor-tk-literal: #ff9e64;
+  --vd-code-editor-tk-function: #7aa2f7;
+  --vd-code-editor-tk-operator: #89ddff;
+  --vd-code-editor-tk-punctuation: #9aa5ce;
+  --vd-code-editor-tk-property: #7dcfff;
+  --vd-code-editor-tk-tag: #f7768e;
+  --vd-code-editor-tk-attribute: #ff9e64;
+  --vd-code-editor-tk-builtin: #4dd0e1;
+  --vd-code-editor-tk-meta: #f778ba;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --vd-code-editor-gutter-bg: var(--vd-bg-secondary, #161b22);
+    --vd-code-editor-active-line: var(--vd-color-primary-alpha-10, rgba(88, 166, 255, 0.1));
+    --vd-code-editor-selection: rgba(var(--vd-color-primary-rgb, 88, 166, 255), 0.28);
+    --vd-code-editor-tk-comment: #7d8590;
+    --vd-code-editor-tk-keyword: #c792ea;
+    --vd-code-editor-tk-string: #9ece6a;
+    --vd-code-editor-tk-number: #ff9e64;
+    --vd-code-editor-tk-literal: #ff9e64;
+    --vd-code-editor-tk-function: #7aa2f7;
+    --vd-code-editor-tk-operator: #89ddff;
+    --vd-code-editor-tk-punctuation: #9aa5ce;
+    --vd-code-editor-tk-property: #7dcfff;
+    --vd-code-editor-tk-tag: #f7768e;
+    --vd-code-editor-tk-attribute: #ff9e64;
+    --vd-code-editor-tk-builtin: #4dd0e1;
+    --vd-code-editor-tk-meta: #f778ba;
+  }
+}
+
+/* ── container ─────────────────────────────────────────────────────────── */
+
+.vd-code-editor {
+  --vd-code-editor-gutter-width: calc(var(--vd-code-editor-gutter-digits, 2) * 1ch + 1rem);
+  --vd-code-editor-pad-left: var(--vd-code-editor-padding);
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  height: 16rem;
+  overflow: hidden;
+  direction: ltr;
+  background: var(--vd-code-editor-bg);
+  color: var(--vd-code-editor-text);
+  border: 1px solid var(--vd-code-editor-border);
+  border-radius: var(--vd-code-editor-radius);
+  font-family: var(--vd-code-editor-font);
+  font-size: var(--vd-code-editor-font-size);
+  line-height: var(--vd-code-editor-line-height);
+  tab-size: var(--vd-code-editor-tab-size);
+}
+
+.vd-code-editor.has-gutter {
+  --vd-code-editor-pad-left: calc(var(--vd-code-editor-gutter-width) + 0.5rem);
+}
+
+/* ── shared metrics: the two layers must match exactly ─────────────────── */
+
+.vd-code-editor-input,
+.vd-code-editor-highlight {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  padding: var(--vd-code-editor-padding);
+  padding-left: var(--vd-code-editor-pad-left);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: var(--vd-code-editor-line-height);
+  tab-size: inherit;
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  unicode-bidi: plaintext;
+}
+
+.vd-code-editor.is-wrap .vd-code-editor-input,
+.vd-code-editor.is-wrap .vd-code-editor-highlight {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* Both layers must share the same scrollbar-gutter reservation so long lines
+     wrap at identical positions.  Without this, the textarea's visible scrollbar
+     shrinks its client width while the hidden-overflow <pre> keeps the full
+     width, causing caret-to-glyph misalignment on wrapped lines. */
+  scrollbar-gutter: stable;
+}
+
+/* Editable surface — transparent text over the highlight, visible caret. */
+.vd-code-editor-input {
+  z-index: 2;
+  resize: none;
+  overflow: auto;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--vd-code-editor-caret);
+}
+
+.vd-code-editor-input::selection {
+  background: var(--vd-code-editor-selection);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.vd-code-editor-input::placeholder {
+  color: var(--vd-code-editor-placeholder);
+  -webkit-text-fill-color: var(--vd-code-editor-placeholder);
+  opacity: 1;
+}
+
+/* Highlight layer — painted tokens, non-interactive. */
+.vd-code-editor-highlight {
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--vd-code-editor-text);
+}
+
+.vd-code-editor-code {
+  display: block;
+  min-height: 100%;
+  font: inherit;
+}
+
+/* ── gutter ────────────────────────────────────────────────────────────── */
+
+.vd-code-editor-gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  width: var(--vd-code-editor-gutter-width);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  background: var(--vd-code-editor-gutter-bg);
+  border-right: 1px solid var(--vd-code-editor-border);
+}
+
+.vd-code-editor-gutter-lines {
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  left: 0;
+  padding-top: var(--vd-code-editor-padding);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: var(--vd-code-editor-line-height);
+  color: var(--vd-code-editor-gutter-text);
+  text-align: right;
+  white-space: pre;
+  will-change: transform;
+}
+
+/* ── active line ───────────────────────────────────────────────────────── */
+
+.vd-code-editor-active-line {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: 1.5em;
+  pointer-events: none;
+  background: var(--vd-code-editor-active-line);
+  will-change: transform;
+}
+
+/* ── copy button ───────────────────────────────────────────────────────── */
+
+.vd-code-editor-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 4;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--vd-font-sans, system-ui, sans-serif);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--vd-code-editor-text);
+  cursor: pointer;
+  background: var(--vd-code-editor-gutter-bg);
+  border: 1px solid var(--vd-code-editor-border);
+  border-radius: calc(var(--vd-code-editor-radius) * 0.6);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.vd-code-editor:hover .vd-code-editor-copy,
+.vd-code-editor:focus-within .vd-code-editor-copy,
+.vd-code-editor-copy:focus-visible {
+  opacity: 1;
+}
+
+.vd-code-editor-copy.is-copied {
+  color: var(--vd-code-editor-tk-string);
+  border-color: var(--vd-code-editor-tk-string);
+}
+
+.vd-code-editor.is-readonly .vd-code-editor-input {
+  cursor: default;
+}
+
+/* ── token colors ──────────────────────────────────────────────────────── */
+
+.vd-tk-comment {
+  font-style: italic;
+  color: var(--vd-code-editor-tk-comment);
+}
+.vd-tk-keyword {
+  font-weight: 600;
+  color: var(--vd-code-editor-tk-keyword);
+}
+.vd-tk-string {
+  color: var(--vd-code-editor-tk-string);
+}
+.vd-tk-number {
+  color: var(--vd-code-editor-tk-number);
+}
+.vd-tk-boolean,
+.vd-tk-null {
+  color: var(--vd-code-editor-tk-literal);
+}
+.vd-tk-function {
+  color: var(--vd-code-editor-tk-function);
+}
+.vd-tk-operator {
+  color: var(--vd-code-editor-tk-operator);
+}
+.vd-tk-punctuation {
+  color: var(--vd-code-editor-tk-punctuation);
+}
+.vd-tk-property {
+  color: var(--vd-code-editor-tk-property);
+}
+.vd-tk-tag {
+  color: var(--vd-code-editor-tk-tag);
+}
+.vd-tk-attribute {
+  color: var(--vd-code-editor-tk-attribute);
+}
+.vd-tk-builtin {
+  color: var(--vd-code-editor-tk-builtin);
+}
+.vd-tk-variable {
+  color: var(--vd-code-editor-text);
+}
+.vd-tk-regex {
+  color: var(--vd-code-editor-tk-string);
+}
+.vd-tk-meta {
+  color: var(--vd-code-editor-tk-meta);
+}

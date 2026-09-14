@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vdl-cbun music-player smoke</title>
+    <!-- Empty data-URI favicon: suppress Chromium's /favicon.ico 404 (would fail
+         the zero-console-errors gate). -->
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/dist/music-player/vd3-music-player.css" />
+    <style>
+      :root {
+        --vd-bg-primary: #ffffff;
+        --vd-bg-secondary: #f8f9fa;
+        --vd-border-color: #dee2e6;
+        --vd-text-primary: #1a1d20;
+        --vd-text-muted: #868e96;
+        --vd-color-primary: #245f52;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: system-ui, sans-serif;
+        background: #ffffff;
+      }
+      #player {
+        max-width: 480px;
+      }
+    </style>
+    <!-- `vue` is a bare external specifier in the built entry; the import map
+         resolves it to the local browser build. We drive the framework-agnostic
+         core directly — no Vue app is mounted. -->
+    <script type="importmap">
+      { "imports": { "vue": "/node_modules/vue/dist/vue.esm-browser.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="player" class="vd-music-player"></div>
+
+    <script type="module">
+      import { MusicPlayer, VD_MUSIC_PLAYER_VERSION } from '/dist/music-player/index.js';
+
+      window.musicVersion = VD_MUSIC_PLAYER_VERSION;
+
+      const container = document.querySelector('#player');
+      MusicPlayer.initPlayer(container, {
+        tracks: [
+          {
+            name: 'Smoke',
+            url: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=',
+          },
+        ],
+        volume: 0.4,
+        showProgress: true,
+        showPlaylist: true,
+      });
+
+      window.getState = () => MusicPlayer.getState(container);
+      window.setVolume = (v) => MusicPlayer.setVolume(container, v);
+      window.destroy = () => MusicPlayer.destroy(container);
+      window.__ready = true;
+    </script>
+  </body>
+</html>
