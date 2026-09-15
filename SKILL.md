@@ -14,10 +14,12 @@ aliased with a `Core` suffix where the names collide). Charts and flowchart
 are **not** in this package — use `@vanduo-oss/vd3-charts` /
 `@vanduo-oss/vd3-flowchart`.
 
-## Install
+## Install (sibling link)
 
-```sh
-pnpm add @vanduo-oss/vdl-cbun
+Not on npm. Clone beside Labs (or any host), build, then depend with `link:`:
+
+```json
+"@vanduo-oss/vdl-cbun": "link:../vdl-cbun"
 ```
 
 Import each component from its own subpath; nothing registers globally. For

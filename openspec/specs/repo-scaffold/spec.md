@@ -2,7 +2,7 @@
 
 ## Purpose
 Package metadata, multi-entry build, CI gates, version manifest, and
-publish surface for `@vanduo-oss/vdl-cbun`.
+Labs-sibling (`link:`) packaging for `@vanduo-oss/vdl-cbun`.
 
 ## Requirements
 
@@ -10,8 +10,9 @@ publish surface for `@vanduo-oss/vdl-cbun`.
 
 The package MUST be `@vanduo-oss/vdl-cbun`, version `1.0.0`, MIT-licensed, ESM
 (`type: "module"`), with `vue >=3.3.0` declared as a REQUIRED peer dependency
-(no `peerDependenciesMeta` optionality). It MUST set
-`publishConfig: { "access": "public" }`. The `exports` map SHALL declare the
+(no `peerDependenciesMeta` optionality). It MUST be a Labs sibling repo
+(`"private": true`) and MUST NOT declare `publishConfig` for public npm.
+The `exports` map SHALL declare the
 subpath contract: `.` (types + import only — version map), `./code-editor`,
 `./code-editor/highlight`, `./draw`, `./hex-grid`, `./hex-grid/hex-math`, and
 `./music-player` (each with `types`/`import`/`require` under
@@ -46,11 +47,12 @@ MUST NOT be exported from this package.
 - **THEN** the package manager reports the missing `vue >=3.3.0` peer instead
   of silently proceeding
 
-#### Scenario: manifest is publishable
+#### Scenario: manifest is Labs-sibling (not npm)
 
-- **GIVEN** the release-ready `package.json`
+- **GIVEN** the `package.json`
 - **WHEN** its publish-relevant fields are inspected
-- **THEN** `version` is `1.0.0` and `publishConfig.access` is `"public"`
+- **THEN** `version` is `1.0.0`, `"private"` is `true`, and `publishConfig`
+  is absent
 
 ### Requirement: toolchain baseline
 
@@ -60,7 +62,7 @@ Node 24 is pinned by `packageManager` and `.github/workflows/ci.yml`. It MUST
 define scripts `build`, `clean`, `lint`, `format`, `format:check`,
 `stylelint`, `test`, `test:types`
 (`tsc --noEmit -p tests/types/tsconfig.json`), `test:e2e`, `prepack`, and
-`release` (`pnpm run build && pnpm publish`).
+`release` (`pnpm run build` only — no `pnpm publish`).
 
 #### Scenario: every defined script is green
 
@@ -168,26 +170,24 @@ code-editor, and music-player.
 ### Requirement: release-ready package documentation
 
 The repo MUST ship `README.md`, `SKILL.md`, `CHANGELOG.md`, `CONTRIBUTING.md`,
-and the MIT `LICENSE`. Published files MUST stay limited to `dist`,
-`README.md`, `SKILL.md`, `CHANGELOG.md`, and `LICENSE`. `CHANGELOG.md` MUST
-carry a dated `## 1.0.0` entry. `SKILL.md` MUST carry Agent Skills frontmatter
-(`name: vanduo-vdl-cbun`).
+and the MIT `LICENSE`. Docs MUST describe sibling `link:` consumption (not
+npm install). `CHANGELOG.md` MUST carry a dated `## 1.0.0` entry. `SKILL.md`
+MUST carry Agent Skills frontmatter (`name: vanduo-vdl-cbun`).
 
-#### Scenario: npm pack ships the docs and excludes internals
+#### Scenario: docs describe link: install
 
-- **GIVEN** the `files` allow-list in `package.json`
-- **WHEN** `pnpm pack` assembles the tarball
-- **THEN** it contains `README.md`, `SKILL.md`, `CHANGELOG.md`, `LICENSE`,
-  `dist/`, and `package.json` — and never `openspec/`, `tests/`, or `scripts/`
+- **GIVEN** `README.md` and `SKILL.md`
+- **WHEN** install instructions are read
+- **THEN** they show `link:../vdl-cbun` (or equivalent path) and do not
+  instruct `pnpm add @vanduo-oss/vdl-cbun` from the public registry
 
-### Requirement: release-publish-configuration
+### Requirement: no public npm publish
 
-`publishConfig.access` MUST be `"public"`. A `release` script MUST explicitly
-run `build` before `pnpm publish` because `.npmrc` `ignore-scripts=true`
-skips `prepack`.
+The package MUST remain `"private": true` with no `publishConfig`. A
+`release` script MUST run `build` only (no `pnpm publish`).
 
-#### Scenario: release always ships a built dist
+#### Scenario: release builds without publishing
 
 - **GIVEN** `.npmrc` sets `ignore-scripts=true` and `dist/` is gitignored
 - **WHEN** the maintainer runs `pnpm run release`
-- **THEN** the full `build` runs before `pnpm publish`
+- **THEN** the full `build` runs and no registry publish is invoked
