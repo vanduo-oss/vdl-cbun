@@ -8,14 +8,30 @@ on a tree-shakeable subpath. Extracted 1-to-1 from `@vanduo-oss/vd3-cbun`
 (widget versions preserved). Charts and flowchart live in
 `@vanduo-oss/vd3-charts` / `@vanduo-oss/vd3-flowchart`.
 
+This is a **Labs sibling repo**, not a public npm package. Consume it via
+`link:` / workspace next to [Vanduo Labs](https://github.com/vanduo-oss/labs).
+
 **Status: 1.0.0** (bundle). Widget constants: code-editor / draw / hex-grid
 `1.1.0`, music-player `1.0.1`. APIs stay `Vd*` with `--vd-*` tokens and
 `vd3-*.css` filenames from the extract.
 
-## Install
+## Install (sibling link)
+
+Clone beside Labs (or any host app), build, then depend with `link:`:
 
 ```sh
-pnpm add @vanduo-oss/vdl-cbun
+git clone https://github.com/vanduo-oss/vdl-cbun.git
+cd vdl-cbun && pnpm install && pnpm run build
+```
+
+In the host `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@vanduo-oss/vdl-cbun": "link:../vdl-cbun"
+  }
+}
 ```
 
 `vue >=3.3.0` is a **required** peer dependency. For correct theming, also
@@ -71,7 +87,7 @@ import '@vanduo-oss/vd3/css/core';
 - **No `eval` / remote code execution** — the code-editor highlights and edits
   text only; draw never evaluates content.
 - **Hardened install** — `.npmrc` sets `ignore-scripts=true` and related
-  policies; publish via `pnpm run release` so `dist/` is always rebuilt.
+  policies; rebuild `dist/` with `pnpm run build` before linking.
 
 ## Docs
 

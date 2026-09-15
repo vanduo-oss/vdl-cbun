@@ -1,13 +1,11 @@
 {
   "name": "@vanduo-oss/vdl-cbun",
   "version": "1.0.0",
+  "private": true,
   "description": "Vanduo Labs miscellaneous Vue 3 component bundle — code-editor, draw, hex-grid, music-player",
   "type": "module",
   "license": "MIT",
   "author": "vanduo-oss",
-  "publishConfig": {
-    "access": "public"
-  },
   "homepage": "https://github.com/vanduo-oss/vdl-cbun#readme",
   "repository": {
     "type": "git",
@@ -87,7 +85,7 @@
     "test:types": "tsc --noEmit -p tests/types/tsconfig.json",
     "test:e2e": "playwright test",
     "prepack": "pnpm run build",
-    "release": "pnpm run build && pnpm publish"
+    "release": "pnpm run build"
   },
   "peerDependencies": {
     "vue": ">=3.3.0"
