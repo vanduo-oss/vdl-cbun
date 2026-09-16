@@ -115,12 +115,12 @@ describe('VdHexGridCore theme-color reading', () => {
 });
 
 describe('hex-grid version constants', () => {
-  it('VD_HEX_VERSION === "1.1.0"', () => {
-    expect(VD_HEX_VERSION).toBe('1.1.0');
+  it('VD_HEX_VERSION === "1.2.0"', () => {
+    expect(VD_HEX_VERSION).toBe('1.2.0');
   });
 
   it('static VdHexGridCore.VERSION mirrors VD_HEX_VERSION', () => {
-    expect(VdHexGridCore.VERSION).toBe('1.1.0');
+    expect(VdHexGridCore.VERSION).toBe('1.2.0');
     expect(VdHexGridCore.VERSION).toBe(VD_HEX_VERSION);
   });
 

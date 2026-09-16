@@ -92,7 +92,7 @@ in `pnpm-workspace.yaml`.
 
 The repo MUST ship `component-versions.json` with keys `code-editor`, `draw`,
 `hex-grid`, and `music-player` only. Values MUST be `1.1.0`, `1.1.0`,
-`1.1.0`, and `1.0.1` respectively. The root entry `src/index.js` SHALL export
+`1.2.0`, and `1.0.1` respectively. The root entry `src/index.js` SHALL export
 a frozen `VDL_CBUN_VERSIONS` map whose values mirror that manifest exactly.
 An automated test MUST assert the sync.
 

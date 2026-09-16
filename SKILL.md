@@ -52,7 +52,10 @@ import { VdHexGrid, VdHexGridCore } from '@vanduo-oss/vdl-cbun/hex-grid';
 import { hexToPixel, TerrainType } from '@vanduo-oss/vdl-cbun/hex-grid/hex-math';
 ```
 
-No CSS subpath — canvas themed via `--vd-*` tokens. `VD_HEX_VERSION` is `1.1.0`.
+No CSS subpath — canvas themed via `--vd-*` tokens. `VD_HEX_VERSION` is `1.2.0`.
+Zoom limits are configurable per instance (`minScale`, `maxScale`, `zoomFactor`,
+`zoomStep`) and via `setZoomLimits()`; `scaleAround(factor, localX, localY)`
+zooms about an anchor and `zoomIn()`/`zoomOut()` are centre-anchored.
 
 ## Music player
 

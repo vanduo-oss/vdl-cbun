@@ -16,7 +16,7 @@ describe('VDL_CBUN_VERSIONS', () => {
 
   it('preserves load-bearing widget versions from the vd3-cbun extract', () => {
     expect(VDL_CBUN_VERSIONS.draw).toBe('1.1.0');
-    expect(VDL_CBUN_VERSIONS['hex-grid']).toBe('1.1.0');
+    expect(VDL_CBUN_VERSIONS['hex-grid']).toBe('1.2.0');
     expect(VDL_CBUN_VERSIONS['code-editor']).toBe('1.1.0');
     expect(VDL_CBUN_VERSIONS['music-player']).toBe('1.0.1');
   });

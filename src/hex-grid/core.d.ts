@@ -27,6 +27,22 @@ export interface VdHexGridOptions {
   pixelRatio?: number | 'auto';
   /** Viewport culling. Default true. */
   cull?: boolean;
+  /** Lower bound for the zoom scale. Default 0.3. */
+  minScale?: number;
+  /** Upper bound for the zoom scale. Default 3. */
+  maxScale?: number;
+  /** Wheel/pinch zoom step, as a fraction of the current scale. Default 0.1. */
+  zoomFactor?: number;
+  /** `zoomIn`/`zoomOut` multiplier. Default 1.2 (mirrors `VdDraw`). */
+  zoomStep?: number;
+}
+
+/** Runtime zoom limits accepted by {@link VdHexGrid.setZoomLimits}. */
+export interface HexZoomLimits {
+  minScale?: number;
+  maxScale?: number;
+  zoomFactor?: number;
+  zoomStep?: number;
 }
 
 /** A single hex cell stored in the grid. */
@@ -112,6 +128,14 @@ export declare class VdHexGrid {
   pixelRatio: number | 'auto';
   /** Viewport culling flag. */
   cull: boolean;
+  /** Lower bound applied to `transform.scale`. */
+  minScale: number;
+  /** Upper bound applied to `transform.scale`. */
+  maxScale: number;
+  /** Wheel/pinch zoom step as a fraction of the current scale. */
+  zoomFactor: number;
+  /** `zoomIn`/`zoomOut` multiplier. */
+  zoomStep: number;
   /** All hexes, keyed by `"q,r"`. */
   hexes: Map<string, HexCell>;
   /** Currently selected hex, or null. */
@@ -164,11 +188,25 @@ export declare class VdHexGrid {
   /** Reset view to the default position (emits 'pan' and 'zoom'). */
   resetView(): void;
 
-  /** Zoom in one step (emits 'zoom'). */
+  /** Zoom in one step about the viewport centre (emits 'zoom'). */
   zoomIn(): void;
 
-  /** Zoom out one step (emits 'zoom'). */
+  /** Zoom out one step about the viewport centre (emits 'zoom'). */
   zoomOut(): void;
+
+  /**
+   * Zoom about a canvas-local anchor, preserving the world point under it
+   * (mirrors `VdDraw.scaleAround`). Clamped to `minScale`/`maxScale`; emits
+   * `zoom` and renders when the scale changes.
+   */
+  scaleAround(factor: number, localX: number, localY: number): this;
+
+  /**
+   * Update the zoom limits/step at runtime. Finite, positive values are
+   * applied, `minScale` is kept at or below `maxScale`, and the current scale
+   * is reclamped into the new range.
+   */
+  setZoomLimits(limits: HexZoomLimits): this;
 
   /** Get a copy of the current transform state. */
   getTransform(): HexGridTransform;

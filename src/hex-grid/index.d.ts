@@ -8,6 +8,7 @@ export type { VdHexGridProps, VdHexGridEmits } from './vue.js';
 export { VdHexGrid as VdHexGridCore, VD_HEX_VERSION } from './core.js';
 export type {
   VdHexGridOptions,
+  HexZoomLimits,
   HexCell,
   HexGridTransform,
   HexRenderStats,

@@ -11,9 +11,9 @@ on a tree-shakeable subpath. Extracted 1-to-1 from `@vanduo-oss/vd3-cbun`
 This is a **Labs sibling repo**, not a public npm package. Consume it via
 `link:` / workspace next to [Vanduo Labs](https://github.com/vanduo-oss/labs).
 
-**Status: 1.0.0** (bundle). Widget constants: code-editor / draw / hex-grid
-`1.1.0`, music-player `1.0.1`. APIs stay `Vd*` with `--vd-*` tokens and
-`vd3-*.css` filenames from the extract.
+**Status: 1.0.0** (bundle). Widget constants: code-editor / draw `1.1.0`,
+hex-grid `1.2.0`, music-player `1.0.1`. APIs stay `Vd*` with `--vd-*` tokens
+and `vd3-*.css` filenames from the extract.
 
 ## Install (sibling link)
 
@@ -62,7 +62,7 @@ and class names are preserved from cbun (`vd3-draw.css`, `.vd-draw-*`).
 
 ```js
 import { VDL_CBUN_VERSIONS } from '@vanduo-oss/vdl-cbun';
-// { 'code-editor': '1.1.0', draw: '1.1.0', 'hex-grid': '1.1.0', 'music-player': '1.0.1' }
+// { 'code-editor': '1.1.0', draw: '1.1.0', 'hex-grid': '1.2.0', 'music-player': '1.0.1' }
 ```
 
 The root `.` export is the frozen version map only. Per-widget `VD_*_VERSION`

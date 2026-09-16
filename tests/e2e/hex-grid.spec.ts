@@ -74,7 +74,7 @@ test.describe('hex-grid smoke — built dist entry paints a real canvas', () => 
     });
     expect(result.count).toBe(48);
     expect(result.hasOrigin).toBe(true);
-    expect(result.version).toBe('1.1.0');
+    expect(result.version).toBe('1.2.0');
   });
 
   test('paints token-derived colors onto the canvas (getImageData)', async ({ page }) => {
