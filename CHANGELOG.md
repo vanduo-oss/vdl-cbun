@@ -2,6 +2,15 @@
 
 All notable changes to `@vanduo-oss/vdl-cbun` are documented here.
 
+## Unreleased
+
+- `./hex-grid` — `1.2.0`: configurable zoom limits. New `minScale`, `maxScale`,
+  `zoomFactor`, and `zoomStep` constructor options, a `setZoomLimits()` runtime
+  setter, and `scaleAround(factor, localX, localY)` to zoom about an anchor.
+  `zoomIn()`/`zoomOut()` now anchor at the viewport centre and use `zoomStep`
+  (default `1.2`); `resetView()` reclamps into the instance range. Defaults
+  (`0.3` / `3` / `0.1`) preserve the previous behaviour for existing consumers.
+
 ## 1.0.0 — 2026-09-14
 
 First public release of `@vanduo-oss/vdl-cbun` — Vanduo Labs miscellaneous

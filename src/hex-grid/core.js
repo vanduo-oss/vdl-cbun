@@ -16,10 +16,14 @@ import {
 } from './hex-math.js';
 
 // Constants
-export const VD_HEX_VERSION = '1.1.0';
-const ZOOM_MIN = 0.3;
-const ZOOM_MAX = 3.0;
-const ZOOM_FACTOR = 0.1;
+export const VD_HEX_VERSION = '1.2.0';
+// Zoom defaults; every instance may override them through constructor options
+// or setZoomLimits() (minScale/maxScale bound transform.scale, zoomFactor is the
+// wheel step, zoomStep the zoomIn/zoomOut multiplier).
+const DEFAULT_MIN_SCALE = 0.3;
+const DEFAULT_MAX_SCALE = 3.0;
+const DEFAULT_ZOOM_FACTOR = 0.1;
+const DEFAULT_ZOOM_STEP = 1.2;
 const DRAG_THRESHOLD = 2;
 
 // Adaptive rendering: above this many visible cells a gesture (pan/zoom) blits
@@ -67,6 +71,10 @@ export class VdHexGrid {
     rotation = 0,
     pixelRatio = 'auto',
     cull = true,
+    minScale = DEFAULT_MIN_SCALE,
+    maxScale = DEFAULT_MAX_SCALE,
+    zoomFactor = DEFAULT_ZOOM_FACTOR,
+    zoomStep = DEFAULT_ZOOM_STEP,
   }) {
     this.element = element;
     this.canvas = canvas;
@@ -78,6 +86,13 @@ export class VdHexGrid {
     this.pixelRatio = pixelRatio;
     /** Viewport culling on/off. */
     this.cull = cull;
+    /** Zoom bounds applied to transform.scale. */
+    this.minScale = minScale;
+    this.maxScale = maxScale;
+    /** Wheel/pinch zoom step (fraction of the current scale). */
+    this.zoomFactor = zoomFactor;
+    /** zoomIn/zoomOut multiplier (mirrors the draw component's 1.2). */
+    this.zoomStep = zoomStep;
     this.hexes = new Map();
     this.selectedHex = null;
     this.listeners = {};
@@ -685,19 +700,12 @@ export class VdHexGrid {
       wheel: (e) => {
         e.preventDefault();
 
-        const zoomFactor = e.deltaY > 0 ? 1 - ZOOM_FACTOR : 1 + ZOOM_FACTOR;
-        const newScale = Math.max(ZOOM_MIN, Math.min(this.transform.scale * zoomFactor, ZOOM_MAX));
-
-        // Zoom toward cursor
+        const factor = e.deltaY > 0 ? 1 - this.zoomFactor : 1 + this.zoomFactor;
         const mouse = this._clientToCanvas(e.clientX, e.clientY);
-
-        const scaleDiff = newScale / this.transform.scale;
-        this.transform.x = mouse.x - (mouse.x - this.transform.x) * scaleDiff;
-        this.transform.y = mouse.y - (mouse.y - this.transform.y) * scaleDiff;
-        this.transform.scale = newScale;
-
-        this._scheduleGestureRender();
-        this._emit('zoom', { scale: this.transform.scale });
+        if (this._applyZoom(factor, mouse.x, mouse.y)) {
+          this._scheduleGestureRender();
+          this._emit('zoom', { scale: this.transform.scale });
+        }
       },
 
       // Touch events for pinch-to-zoom
@@ -716,20 +724,17 @@ export class VdHexGrid {
           const currentDistance = this._getTouchDistance(e.touches);
           const scale =
             (currentDistance / this.touchState.initialDistance) * this.touchState.initialScale;
-          const newScale = Math.max(ZOOM_MIN, Math.min(scale, ZOOM_MAX));
+          const factor = this.transform.scale > 0 ? scale / this.transform.scale : 1;
 
           // Zoom toward center of pinch
           const centerClientX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
           const centerClientY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
           const center = this._clientToCanvas(centerClientX, centerClientY);
 
-          const scaleDiff = newScale / this.transform.scale;
-          this.transform.x = center.x - (center.x - this.transform.x) * scaleDiff;
-          this.transform.y = center.y - (center.y - this.transform.y) * scaleDiff;
-          this.transform.scale = newScale;
-
-          this._scheduleGestureRender();
-          this._emit('zoom', { scale: this.transform.scale });
+          if (this._applyZoom(factor, center.x, center.y)) {
+            this._scheduleGestureRender();
+            this._emit('zoom', { scale: this.transform.scale });
+          }
         }
       },
 
@@ -884,30 +889,106 @@ export class VdHexGrid {
    * Reset view to default position
    */
   resetView() {
-    this.transform = { x: 0, y: 0, scale: 1 };
+    this.transform = { x: 0, y: 0, scale: this._clampScale(1) };
     this._render();
     this._emit('pan', { x: 0, y: 0 });
-    this._emit('zoom', { scale: 1 });
+    this._emit('zoom', { scale: this.transform.scale });
   }
 
   /**
-   * Zoom in
+   * Clamp a scale into the instance's [minScale, maxScale] range.
+   * @param {number} scale
+   * @returns {number}
+   */
+  _clampScale(scale) {
+    const min = Number.isFinite(this.minScale) ? this.minScale : DEFAULT_MIN_SCALE;
+    const max = Number.isFinite(this.maxScale) ? this.maxScale : DEFAULT_MAX_SCALE;
+    return Math.max(min, Math.min(scale, max));
+  }
+
+  /**
+   * Apply a zoom factor about a canvas-local anchor without rendering.
+   * The anchor's screen position is preserved, so the world point under the
+   * cursor/centre stays put. Returns whether the scale actually changed.
+   * @param {number} factor - multiplier applied to the current scale
+   * @param {number} localX - anchor X in canvas-local (CSS) coordinates
+   * @param {number} localY - anchor Y in canvas-local (CSS) coordinates
+   * @returns {boolean}
+   */
+  _applyZoom(factor, localX, localY) {
+    if (!Number.isFinite(factor) || factor <= 0) return false;
+    const current = this.transform.scale;
+    if (!Number.isFinite(current) || current <= 0) return false;
+    const next = this._clampScale(current * factor);
+    if (next === current) return false;
+    const applied = next / current;
+    this.transform.x = localX - (localX - this.transform.x) * applied;
+    this.transform.y = localY - (localY - this.transform.y) * applied;
+    this.transform.scale = next;
+    return true;
+  }
+
+  /**
+   * Zoom about a canvas-local anchor point (mirrors VdDraw.scaleAround).
+   * @param {number} factor - multiplier applied to the current scale
+   * @param {number} localX - anchor X in canvas-local (CSS) coordinates
+   * @param {number} localY - anchor Y in canvas-local (CSS) coordinates
+   * @returns {this}
+   */
+  scaleAround(factor, localX, localY) {
+    if (this._applyZoom(factor, localX, localY)) {
+      this._render();
+      this._emit('zoom', { scale: this.transform.scale });
+    }
+    return this;
+  }
+
+  /**
+   * Update the zoom limits/step at runtime. Only finite, positive values are
+   * accepted; `minScale` is kept at or below `maxScale`. The current scale is
+   * reclamped into the new range and the grid re-renders.
+   * @param {{minScale?: number, maxScale?: number, zoomFactor?: number, zoomStep?: number}} limits
+   * @returns {this}
+   */
+  setZoomLimits({ minScale, maxScale, zoomFactor, zoomStep } = {}) {
+    if (Number.isFinite(minScale) && minScale > 0) this.minScale = minScale;
+    if (Number.isFinite(maxScale) && maxScale > 0) this.maxScale = maxScale;
+    if (this.minScale > this.maxScale) this.maxScale = this.minScale;
+    if (Number.isFinite(zoomFactor) && zoomFactor > 0) this.zoomFactor = zoomFactor;
+    if (Number.isFinite(zoomStep) && zoomStep > 1) this.zoomStep = zoomStep;
+    const clamped = this._clampScale(this.transform.scale);
+    if (clamped !== this.transform.scale) {
+      this.transform.scale = clamped;
+      this._render();
+      this._emit('zoom', { scale: clamped });
+    }
+    return this;
+  }
+
+  /**
+   * Zoom in one step about the viewport centre
    */
   zoomIn() {
-    const newScale = Math.min(this.transform.scale * (1 + ZOOM_FACTOR), ZOOM_MAX);
-    this.transform.scale = newScale;
-    this._render();
-    this._emit('zoom', { scale: this.transform.scale });
+    return this._zoomAtCentre(this.zoomStep);
   }
 
   /**
-   * Zoom out
+   * Zoom out one step about the viewport centre
    */
   zoomOut() {
-    const newScale = Math.max(this.transform.scale * (1 - ZOOM_FACTOR), ZOOM_MIN);
-    this.transform.scale = newScale;
-    this._render();
-    this._emit('zoom', { scale: this.transform.scale });
+    return this._zoomAtCentre(1 / this.zoomStep);
+  }
+
+  /**
+   * Apply a zoom factor anchored at the centre of the canvas.
+   * @param {number} factor
+   * @returns {this}
+   */
+  _zoomAtCentre(factor) {
+    const rect = this.canvas.getBoundingClientRect();
+    const cx = Number.isFinite(rect.width) ? rect.width / 2 : 0;
+    const cy = Number.isFinite(rect.height) ? rect.height / 2 : 0;
+    return this.scaleAround(factor, cx, cy);
   }
 
   /**
